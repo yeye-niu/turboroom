@@ -1,0 +1,10 @@
+{
+  "name": "turboroom",
+  "private": true,
+  "scripts": {
+    "start": "npm --prefix meetroom-web start",
+    "test": "npm --prefix meetroom-web test",
+    "web:start": "npm --prefix meetroom-web start"
+  },
+  "engines": { "node": ">=20" }
+}

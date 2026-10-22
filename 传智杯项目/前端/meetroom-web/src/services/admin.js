@@ -1,0 +1,79 @@
+import {$,esc,json,api,go,toast,session,saveSession,requireLogin,categories,newsCategories,field,bindForm,payload,rich,empty,pageTitle,pageInput,pagination,bindPagination,searchToolbar,bindSearch,statusText} from './core.js';
+const submit = '<button type="submit" class="primary">保存</button>';
+function nav(){return `<nav class="admin-nav" aria-label="管理导航">${[['/admin','概览'],['/admin/meets','场地管理'],['/admin/news','公告管理'],['/admin/users','用户管理'],['/admin/managers','管理员'],['/admin/setup','内容设置'],['/admin/password','修改密码']].map(([url,t])=>`<a href="#${url}">${t}</a>`).join('')}</nav>`;}
+function wrap(html,title,bind){return {html:nav()+html,title,bind};}
+function btn(action,id,label,value=''){return `<button data-action="${action}" data-id="${id}" data-value="${esc(value)}" ${action==='del'?'class="danger"':''}>${label}</button>`;}
+function joinValue(record,mark){const item=json(record.meetJoinForms,[]).find(x=>x.mark===mark);return item?.val||'';}
+function joinStatus(record){return Number(record.meetJoinStatus)===0?'已取消':Number(record.meetJoinIsCheck)===1?'已完成':'待处理';}
+function bindActions(type,refresh){document.querySelectorAll('[data-action]').forEach(b=>b.onclick=async()=>{
+  const {action,id,value}=b.dataset;let body={id};
+  if(action==='del'&&!confirm('确定删除这条记录？此操作不可撤销。'))return;
+  if(action==='status')body.status=Number(value);
+  if(action==='vouch')body.vouch=Number(value);
+  if(action==='order'){const val=prompt('输入排序值（0–9999）',value);if(val===null)return;if(!/^\d{1,4}$/.test(val)){toast('请输入 0–9999 的整数');return;}body.order=Number(val);}
+  if(action==='pwd'){const pwd=prompt('输入新密码（至少 6 位）');if(pwd===null)return;if(pwd.length<6){toast('密码至少 6 位');return;}body.pwd=pwd;}
+  b.disabled=true;try{await api(`/admin/${type}/${action}`,body);toast('操作完成');await refresh();}catch(e){toast(e.message);b.disabled=false;}
+});}
+async function upload(file){if(!file)return '';if(!['image/jpeg','image/png'].includes(file.type))throw new Error('请选择 PNG 或 JPEG 图片');if(file.size>5*1024*1024)throw new Error('图片不能超过 5 MB');const fd=new FormData();fd.append('file',file);const response=await fetch('/meetroom/comm/upload',{method:'POST',headers:{sub:'admin',token:session('admin')?.token||''},body:fd,signal:AbortSignal.timeout(18000)});const r=await response.json();if(!response.ok||Number(r.code)!==200)throw new Error(r.msg||'上传失败');return r.data.fileID;}
+function contentEditor(name,label,value){const nodes=json(value,[]);return field(name,label,'textarea',Array.isArray(nodes)?nodes.filter(n=>n.type==='text').map(n=>n.val).join('\n\n'):String(value||''))+field(name+'Images','正文配图地址（每行一张）','textarea',Array.isArray(nodes)?nodes.filter(n=>n.type==='img').map(n=>n.val).join('\n'):'',{required:false,hint:'可选，图片会展示在正文后。原有配图地址已自动载入。'});}
+function parseContent(text,images='',original=[]){
+  const old=json(original,[]);const urls=images.split('\n').map(s=>s.trim()).filter(Boolean);
+  if(Array.isArray(old)&&old.filter(n=>n.type==='text').map(n=>n.val).join('\n\n')===text&&old.filter(n=>n.type==='img').map(n=>n.val).join('\n')===images)return old;
+  if(!text.trim())throw new Error('请填写正文内容');
+  for(const url of urls){let parsed;try{parsed=new URL(url,location.origin);}catch{throw new Error('正文配图地址无效');}if(!['http:','https:'].includes(parsed.protocol))throw new Error('正文配图必须使用 http 或 https 地址');}
+  return [{type:'text',val:text},...urls.map(val=>({type:'img',val}))];
+}
+export async function adminRoute(path,p){
+  if(path==='/admin/login')return {title:'管理员登录',html:`<div class="panel form narrow">${pageTitle('管理员登录','使用管理账户进入后台。')}<form id="login">${field('name','账号','text','',{min:5,max:30})}${field('password','密码','password','',{min:5,max:30})}<button type="submit" class="primary">登录管理端</button></form><p><a href="#/home">返回学生端</a></p></div>`,bind(){bindForm($('#login'),async v=>{const r=await api('/admin/login',v);saveSession('admin',r);go('/admin');});}};
+  if(!requireLogin('admin'))return;
+  const refresh=async()=>{const {render}=await import('./app.js');await render();};
+  if(path==='/admin'){const r=await api('/admin/home');return wrap(pageTitle('管理中心','校园自习预约 / 管理工作台')+`<section class="stats">${(r||[]).map(x=>`<div class="stat"><span class="muted">${esc(x.title)}</span><strong>${esc(x.cnt)}</strong></div>`).join('')}</section><section class="panel"><h2>日常管理</h2><p class="muted">维护开放场地与公告，查看预约名单，完成到场核销。</p><div class="actions"><a class="button primary" href="#/admin/meets">管理自习场地</a><a class="button" href="#/admin/news">发布校园公告</a></div></section>`,'管理中心');}
+  if(['/admin/meets','/admin/news','/admin/users','/admin/managers'].includes(path)){
+    const type={'/admin/meets':'meet','/admin/news':'news','/admin/users':'user','/admin/managers':'mgr'}[path],prefix=type==='mgr'?'admin':type;
+    const title={meet:'场地管理',news:'公告管理',user:'用户管理',mgr:'管理员管理'}[type];const r=await api(`/admin/${type}/list`,pageInput(p));
+    return wrap(pageTitle(title)+searchToolbar(p)+`<div class="actions">${type!=='user'?`<a class="button primary" href="#/admin/edit?type=${type}">新增${type==='meet'?'场地':type==='news'?'公告':'管理员'}</a>`:'<button id="user-export">导出用户</button>'}</div><div class="table-wrap"><table><thead><tr><th>名称 / 账号</th><th>分类 / 信息</th><th>状态</th><th>操作</th></tr></thead><tbody>${(r.list||[]).map(x=>{const id=x[prefix+'Id'],status=Number(x[prefix+'Status']);return `<tr><td>${esc(x[prefix+'Title']||x[prefix+'Name'])}<br><small>#${id}</small></td><td>${esc(x[prefix+'CateName']||x.userAccount||x.adminDesc||'')}<br>${type==='meet'?`<small>开放 ${json(x.meetDays,[]).length} 天 · 每时段 ${esc(x.meetMaxCnt)} 人</small>`:''}</td><td>${status===1?'正常':'停用 / 下架'}${Number(x[prefix+'Vouch'])===1?' · 推荐':''}</td><td><div class="actions">${type==='user'?`<a class="button" href="#/admin/user?id=${id}">资料</a>${btn('pwd',id,'重置密码')}`:`<a class="button" href="#/admin/edit?type=${type}&id=${id}">编辑</a>`}${type==='meet'?`<a class="button" href="#/admin/days?id=${id}">开放日期</a><a class="button" href="#/admin/joins?id=${id}">预约名单 / 核销</a>`:''}${btn('status',id,status===1?'停用':'启用',status===1?0:1)}${['meet','news'].includes(type)?btn('order',id,'排序',x[prefix+'Order']||0)+btn('vouch',id,Number(x[prefix+'Vouch'])===1?'取消推荐':'推荐',Number(x[prefix+'Vouch'])===1?0:1):''}${btn('del',id,'删除')}</div></td></tr>`;}).join('')}</tbody></table>${!r.list?.length?empty():''}</div>`+pagination(r,p),title,()=>{bindSearch(path);bindPagination(p);bindActions(type,refresh);const b=$('#user-export');if(b)b.onclick=()=>exportRequest('/admin/user/export',{fmt:'xlsx'});});
+  }
+  if(path==='/admin/edit'){
+    const type=p.get('type');if(!['meet','news','mgr'].includes(type))return wrap(empty('不支持的内容类型'),'编辑');const id=p.get('id'),r=id?await api(`/admin/${type}/detail`,{id}):{};if(id&&!r)return wrap(empty('记录不存在'),'编辑');
+    const prefix=type==='mgr'?'admin':type,obj=json(r[prefix+'Obj']),cats=type==='meet'?categories:newsCategories;
+    let fields;
+    if(type==='mgr')fields=field('name','管理账号','text',r.adminName,{min:5,max:30})+field('desc','姓名','text',r.adminDesc,{max:30})+field('phone','手机','tel',r.adminPhone,{required:false})+field('password',id?'新密码（留空不修改）':'密码','password','',{required:!id,min:6,max:30})+field('type','角色','select',r.adminType??0,{choices:[[0,'普通管理员'],[1,'超级管理员'],[9,'其他管理人员']]});
+    else fields=field('title',type==='meet'?'场地名称':'公告标题','text',r[prefix+'Title'],{min:4,max:50})+field('cateId','分类','select',r[prefix+'CateId']||1,{choices:cats.map((t,i)=>[i+1,t])})+field('order','排序值','number',r[prefix+'Order']||0,{min:0,max:9999})+(type==='meet'?field('maxCnt','每时段人数上限','number',r.meetMaxCnt||20,{min:1,max:10000}):'')+field('cover','封面图片地址','url',obj.cover?.[0],{required:!obj.cover?.length,hint:'填写已有图片网址，或使用下方图片上传。'})+field('upload','上传封面','file','',{required:false})+(type==='meet'?field('time','预约时段（每行一条）','textarea',(obj.time||[]).map(t=>t.title).join('\n'),{hint:'例如 08:00-10:00；最多 15 个时段。'})+field('tag','场地特色（用逗号分隔）','text',(obj.tag||[]).join(','),{required:false,max:200})+contentEditor('desc','预约须知',obj.desc||[{type:'text',val:''}]):field('desc','公告简介','textarea',obj.desc,{min:2,max:200})+contentEditor('content','公告正文',obj.content||[{type:'text',val:''}]));
+    return wrap(pageTitle((id?'编辑':'新增')+(type==='meet'?'场地':type==='news'?'公告':'管理员'))+`<div class="panel form"><form id="editor">${fields}${submit}</form></div>`,'编辑',()=>{
+      const uploadField=$('#f-upload');if(uploadField){uploadField.accept='image/png,image/jpeg';$('#f-cover').required=false;}
+      bindForm($('#editor'),async(v,f)=>{
+        let input={...v,...(id?{id}:{})};
+        if(type==='mgr'){input.type=Number(v.type);if(!v.password)delete input.password;}
+        else {
+          let url=v.cover;const file=$('#f-upload').files[0];if(file)url=await upload(file);if(!url)throw new Error('请填写封面地址或上传图片');
+          const values={...obj,cover:[url],desc:type==='meet'?parseContent(v.desc,v.descImages,obj.desc):v.desc};let schema;
+          if(type==='meet'){const times=v.time.split('\n').map(s=>s.trim()).filter(Boolean);if(!times.length||times.length>15)throw new Error('请填写 1–15 个预约时段');values.time=times.map(title=>({title}));values.tag=v.tag.split(/[,，]/).map(s=>s.trim()).filter(Boolean);schema=[['cover','封面图','image'],['time','预约时段设置','rows'],['tag','特色','checkbox'],['desc','预约须知','content']];}
+          else {values.content=parseContent(v.content,v.contentImages,obj.content);schema=[['desc','简介','textarea'],['content','详细内容','content'],['cover','封面图','image']];}
+          input={title:v.title,cateId:Number(v.cateId),cateName:cats[Number(v.cateId)-1],order:Number(v.order),...(type==='meet'?{maxCnt:Number(v.maxCnt)}:{}),...(id?{id}:{}),...payload(schema,values)};
+        }
+        await api(`/admin/${type}/${id?'edit':'insert'}`,input);toast('已保存');go(type==='meet'?'/admin/meets':type==='news'?'/admin/news':'/admin/managers');
+      });
+    });
+  }
+  if(path==='/admin/days'){
+    const id=p.get('id'),r=await api('/admin/meet/detail',{id});return wrap(pageTitle('设置开放日期',r.meetTitle)+`<div class="panel form"><form id="days">${field('days','日期（每行一条）','textarea',json(r.meetDays,[]).join('\n'),{hint:'使用 YYYY-MM-DD 格式，如 2026-10-15。'})}${submit}</form></div>`,'开放日期',()=>bindForm($('#days'),async v=>{const days=[...new Set(v.days.split(/\s+/).filter(Boolean))].sort();if(!days.length||days.some(d=>!/^\d{4}-\d{2}-\d{2}$/.test(d)||Number.isNaN(Date.parse(d))||new Date(d).toISOString().slice(0,10)!==d))throw new Error('请填写有效的 YYYY-MM-DD 日期');await api('/admin/meet/set/days',{meetId:id,days:JSON.stringify(days)});toast('开放日期已保存');go('/admin/meets');}));
+  }
+  if(path==='/admin/joins'){
+    const id=p.get('id'),venue=await api('/admin/meet/detail',{id}),r=await api('/admin/meet/join/list',pageInput(p,{meetId:id,sortType:p.get('check')?'check':'',sortVal:p.get('check')||''}));
+    return wrap(pageTitle('预约订单',venue?.meetTitle||'场地预约')+`<form id="join-search" class="toolbar"><input name="search" aria-label="关键词或日期范围" placeholder="搜索预约号 / 姓名 / 手机号" value="${esc(p.get('search'))}"><select name="check" aria-label="订单状态"><option value="">全部订单状态</option><option value="0" ${p.get('check')==='0'?'selected':''}>待处理</option><option value="1" ${p.get('check')==='1'?'selected':''}>已完成</option></select><button class="primary">查询</button></form><div class="panel"><h2>核销预约</h2><form id="scan" class="toolbar"><input name="code" aria-label="核销码" placeholder="输入核销码或扫描得到的 meet=…" required><button class="primary">核销</button></form><p class="muted">支持 USB 扫码枪输入。粘贴二维码内容也可完成核销。</p></div><div class="table-wrap"><table><thead><tr><th>预约号</th><th>订单状态</th><th>用户名</th><th>手机号</th><th>场地</th><th>预约时间</th><th>操作</th></tr></thead><tbody>${(r.list||[]).map(x=>`<tr><td>${esc(x.meetJoinCode)}</td><td><span class="chip">${joinStatus(x)}</span></td><td>${esc(joinValue(x,'name')||'未填写')}</td><td>${esc(joinValue(x,'phone')||'未填写')}</td><td>${esc(venue?.meetTitle||'')}</td><td>${esc(x.meetJoinDay)}<br>${esc(x.meetJoinTime)}</td><td><div class="actions"><button data-check="${x.meetJoinId}" data-flag="${Number(x.meetJoinIsCheck)===1?0:1}">${Number(x.meetJoinIsCheck)===1?'撤销完成':'完成订单'}</button><button class="danger" data-join-delete="${x.meetJoinId}">删除</button></div></td></tr>`).join('')}</tbody></table>${!r.list?.length?empty():''}</div>`+pagination(r,p)+`<div class="panel"><h2>导出名单</h2><form id="export" class="toolbar">${field('start','开始日期','date')}${field('end','结束日期','date')}<button>导出 Excel</button></form><div class="actions"><button id="print">打印当前页</button><button class="danger" id="clear">清空该场地所有预约</button></div></div>`,'预约名单',()=>{
+      bindPagination(p);$('#join-search').onsubmit=e=>{e.preventDefault();go('/admin/joins?'+new URLSearchParams({id,...Object.fromEntries(new FormData(e.target))}));};
+      bindForm($('#scan'),async v=>{const code=v.code.trim().replace(/^meet=/,'');if(!code)throw new Error('请输入核销码');await api('/admin/meet/join/scan',{meetId:id,code});toast('核销完成');await refresh();});
+      bindForm($('#export'),async v=>{if(v.start>v.end)throw new Error('结束日期须不早于开始日期');await exportRequest('/admin/meet/join/export',{meetId:id,...v},true);});
+      document.querySelectorAll('[data-check]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{await api('/admin/meet/join/check',{meetJoinId:b.dataset.check,flag:Number(b.dataset.flag)});await refresh();}catch(e){toast(e.message);b.disabled=false;}});
+      document.querySelectorAll('[data-join-delete]').forEach(b=>b.onclick=async()=>{if(!confirm('删除该预约？'))return;try{await api('/admin/meet/join/del',{meetJoinId:b.dataset.joinDelete});await refresh();}catch(e){toast(e.message);}});
+      $('#print').onclick=()=>window.print();$('#clear').onclick=async()=>{if(!confirm('清空此场地全部预约记录？不可撤销。'))return;try{await api('/admin/meet/join/clear',{meetId:id});await refresh();}catch(e){toast(e.message);}};
+    });
+  }
+  if(path==='/admin/user'){const r=await api('/admin/user/detail',{id:p.get('id')});if(!r)return wrap(empty('用户不存在'),'用户资料');return wrap(pageTitle('用户资料',r.userName)+`<div class="panel"><dl class="row-data"><dt>账号</dt><dd>${esc(r.userAccount)}</dd>${json(r.userForms,[]).map(f=>`<dt>${esc(f.title)}</dt><dd>${esc(f.val)}</dd>`).join('')}</dl></div>`,'用户资料');}
+  if(path==='/admin/setup'){
+    const key=p.get('key')||'SETUP_CONTENT_ABOUT',r=await api('/setup/get',{key},'admin');return wrap(pageTitle('内容设置')+`<div class="actions"><a class="button" href="#/admin/setup?key=SETUP_CONTENT_ABOUT">关于我们</a><a class="button" href="#/admin/setup?key=SETUP_YS">用户使用协议</a></div><div class="panel form"><form id="setup">${contentEditor('content',key==='SETUP_YS'?'用户使用协议':'关于我们',r||[{type:'text',val:''}])}${submit}</form></div>`,'内容设置',()=>bindForm($('#setup'),async v=>{const content=parseContent(v.content,v.contentImages,r);await api('/admin/setup/set',{key,content:JSON.stringify(content)});toast('内容已保存');}));
+  }
+  if(path==='/admin/password')return wrap(pageTitle('修改管理密码')+`<div class="panel form narrow"><form id="pwd">${field('oldPassword','旧密码','password','',{min:6,max:30})}${field('password','新密码','password','',{min:6,max:30})}${field('confirm','确认新密码','password','',{min:6,max:30})}${submit}</form></div>`,'修改密码',()=>bindForm($('#pwd'),async v=>{if(v.password!==v.confirm)throw new Error('两次新密码不一致');await api('/admin/mgr/pwd',{oldPassword:v.oldPassword,password:v.password});saveSession('admin',null);go('/admin/login');toast('密码已修改，请重新登录');}));
+  return wrap(empty('页面不存在'),'页面不存在');
+}
+async function exportRequest(route,input,propagate=false){try{const result=await api(route,input);const url=typeof result==='string'?result:result?.url||result?.fileID||result?.path;if(!url)throw new Error('服务未返回可下载文件');const parsed=new URL(url,location.origin);if(!['https:','http:'].includes(parsed.protocol))throw new Error('下载地址无效');const a=document.createElement('a');a.href=parsed.href;a.rel='noopener';a.target='_blank';a.click();}catch(e){if(propagate)throw e;toast(e.message);}}
