@@ -1,0 +1,227 @@
+.code-slots {
+  --cs-accent: #16775f;
+  --cs-ink: #16775f;
+  --cs-slot: #e8f2ec;
+  --cs-digit: #173c34;
+  --cs-danger: #ad3030;
+  --cs-size: 48px;
+  --cs-height: 56px;
+  --cs-gap: 8px;
+  --cs-radius: 10px;
+  --cs-font: 24px;
+
+  position: relative;
+  display: inline-block;
+}
+
+.code-slots__row {
+  position: relative;
+  display: inline-flex;
+  gap: var(--cs-gap);
+  cursor: text;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 200ms ease;
+}
+
+.code-slots__row[data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.code-slots__input {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: transparent;
+  caret-color: transparent;
+  font-size: 16px;
+  opacity: 0;
+  cursor: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 100%;
+}
+
+.code-slots__wash {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  border-radius: var(--cs-radius);
+  background: var(--cs-accent);
+  color: white;
+  font-size: 28px;
+  font-weight: 700;
+  pointer-events: none;
+  animation: cs-wash-in 0.3s ease-out forwards;
+}
+
+@keyframes cs-wash-in {
+  from {
+    clip-path: inset(0 50% round var(--cs-radius));
+    opacity: 0;
+  }
+  to {
+    clip-path: inset(0 0 round var(--cs-radius));
+    opacity: 1;
+  }
+}
+
+.code-slots__check {
+  display: grid;
+  place-items: center;
+  animation: cs-check-rise 0.35s ease-out 0.2s both;
+}
+
+@keyframes cs-check-rise {
+  from {
+    transform: translateY(8px) scale(0.85);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.code-slots__slot {
+  position: relative;
+  width: var(--cs-size);
+  height: var(--cs-height);
+  border-radius: var(--cs-radius);
+  overflow: hidden;
+  background: var(--cs-slot);
+  transition: background-color 200ms ease, transform 200ms ease;
+  user-select: none;
+  -webkit-user-select: none;
+  display: grid;
+  place-items: center;
+}
+
+.code-slots__slot--active {
+  background: color-mix(in srgb, var(--cs-ink) 12%, var(--cs-slot));
+  box-shadow: 0 0 0 2px var(--cs-ink);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .code-slots__row[data-status='idle']:not([data-disabled]):hover .code-slots__slot:not(.code-slots__slot--active) {
+    background: color-mix(in srgb, var(--cs-ink) 6%, var(--cs-slot));
+  }
+}
+
+.code-slots__row[data-status='error'] .code-slots__slot {
+  background: color-mix(in srgb, var(--cs-danger) 15%, var(--cs-slot));
+}
+
+.code-slots__slot--landing {
+  animation: cs-land 0.3s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+@keyframes cs-land {
+  0% {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(2px);
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.code-slots__slot--draining {
+  animation: cs-drain 0.3s ease-in forwards;
+}
+
+@keyframes cs-drain {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+}
+
+.code-slots__digit {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  color: var(--cs-digit);
+  font-family: inherit;
+  font-size: var(--cs-font);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.code-slots__digit--mask {
+  font-size: calc(var(--cs-font) * 0.6);
+  letter-spacing: 2px;
+}
+
+.code-slots__caret {
+  position: absolute;
+  z-index: 3;
+  top: 25%;
+  width: 1.5px;
+  height: 50%;
+  pointer-events: none;
+}
+
+.code-slots__caret-line {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--cs-ink);
+  animation: cs-blink 1s linear infinite;
+}
+
+@keyframes cs-blink {
+  0%, 49.9% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.code-slots__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .code-slots__digit,
+  .code-slots__check,
+  .code-slots__slot--landing,
+  .code-slots__slot--draining {
+    animation: none !important;
+    transition: opacity 150ms ease;
+  }
+
+  .code-slots__caret-line {
+    animation: none;
+  }
+
+  .code-slots__wash {
+    animation: none;
+    opacity: 1;
+  }
+}

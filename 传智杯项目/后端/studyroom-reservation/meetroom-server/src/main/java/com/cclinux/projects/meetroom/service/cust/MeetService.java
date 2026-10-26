@@ -82,16 +82,23 @@ public class MeetService extends BaseMyCustService {
         if (NumberUtil.compare(cateId, 0) > 0)
             where.eq("MEET_CATE_ID", cateId);
 
-        // 关键字查询
+        // 关键字查询 - 搜索标题和详细信息
         String search = pageRequest.getSearch();
         if (StrUtil.isNotEmpty(search)) {
             where.and(wrapper -> {
                 wrapper.or().like("MEET_TITLE", search);
+                wrapper.or().like("MEET_OBJ", search);
             });
         }
 
+        // 教学楼筛选
         String building = pageRequest.getParamStr("building");
-        if (StrUtil.isNotEmpty(building)) where.like("MEET_TITLE", building);
+        if (StrUtil.isNotEmpty(building)) {
+            where.and(wrapper -> {
+                wrapper.or().like("MEET_TITLE", building);
+                wrapper.or().like("MEET_OBJ", building);
+            });
+        }
         String roomType = pageRequest.getParamStr("roomType");
         if (StrUtil.isNotEmpty(roomType)) where.eq("MEET_CATE_NAME", roomType);
         String day = pageRequest.getParamStr("day");
