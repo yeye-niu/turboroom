@@ -12,14 +12,30 @@
       <span v-if="category" class="chip">{{ category }}</span>
       <h3>{{ title }}</h3>
       <p class="muted">{{ description }}</p>
-      <router-link class="button" :to="link">{{ actionText }} <span aria-hidden="true">&rarr;</span></router-link>
+      <SpecularButton
+        size="md"
+        :radius="12"
+        tint="#1a7a6b"
+        :tintOpacity="0.15"
+        textColor="#1a7a6b"
+        lineColor="#1a7a6b"
+        baseColor="#1a7a6b"
+        :intensity="0.8"
+        :idleIntensity="0.5"
+        @click="router.push(link)"
+      >
+        {{ actionText }} <span aria-hidden="true">&rarr;</span>
+      </SpecularButton>
     </div>
   </article>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { parseJson, getImageUrl } from '../composables/useHelpers'
+
+const router = useRouter()
 
 const props = defineProps({
   item: { type: Object, required: true },

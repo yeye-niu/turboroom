@@ -15,9 +15,22 @@
         <label for="password">密码 *</label>
         <input id="password" type="password" v-model="form.password" required minlength="5" maxlength="30">
       </div>
-      <button type="submit" class="primary" :disabled="submitting">
+      <SpecularButton
+        type="submit"
+        class="primary"
+        size="lg"
+        :radius="14"
+        tint="#1a7a6b"
+        :tintOpacity="0.2"
+        textColor="#ffffff"
+        lineColor="#ffffff"
+        baseColor="#1a7a6b"
+        :intensity="0.9"
+        :idleIntensity="0.4"
+        :disabled="submitting"
+      >
         {{ submitting ? '登录中...' : '登录管理端' }}
-      </button>
+      </SpecularButton>
     </form>
     <p><router-link to="/home">返回学生端</router-link></p>
   </div>

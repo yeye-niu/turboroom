@@ -6,23 +6,24 @@ const routes = [
     path: '/',
     component: () => import('../layouts/MainLayout.vue'),
     children: [
-      { path: '', redirect: '/home' },
-      { path: 'home', name: 'Home', component: () => import('../views/student/HomeView.vue') },
-      { path: 'meets', name: 'Meets', component: () => import('../views/student/MeetList.vue') },
-      { path: 'meet', name: 'MeetDetail', component: () => import('../views/student/MeetDetail.vue') },
-      { path: 'news-list', name: 'NewsList', component: () => import('../views/student/NewsList.vue') },
-      { path: 'news', name: 'NewsDetail', component: () => import('../views/student/NewsDetail.vue') },
+      { path: '', redirect: '/login' },
       { path: 'login', name: 'Login', component: () => import('../views/student/LoginView.vue') },
       { path: 'register', name: 'Register', component: () => import('../views/student/RegisterView.vue') },
+      { path: 'home', name: 'Home', component: () => import('../views/student/HomeView.vue'), meta: { auth: true } },
+      { path: 'meets', name: 'Meets', component: () => import('../views/student/MeetList.vue'), meta: { auth: true } },
+      { path: 'meet', name: 'MeetDetail', component: () => import('../views/student/MeetDetail.vue'), meta: { auth: true } },
+      { path: 'news-list', name: 'NewsList', component: () => import('../views/student/NewsList.vue'), meta: { auth: true } },
+      { path: 'news', name: 'NewsDetail', component: () => import('../views/student/NewsDetail.vue'), meta: { auth: true } },
+      { path: 'ai', name: 'AiAssistant', component: () => import('../views/student/AiAssistant.vue') },
       { path: 'join', name: 'JoinBooking', component: () => import('../views/student/JoinBooking.vue'), meta: { auth: true } },
       { path: 'bookings', name: 'Bookings', component: () => import('../views/student/Bookings.vue'), meta: { auth: true } },
       { path: 'booking', name: 'BookingDetail', component: () => import('../views/student/BookingDetail.vue'), meta: { auth: true } },
       { path: 'profile', name: 'Profile', component: () => import('../views/student/ProfileView.vue'), meta: { auth: true } },
       { path: 'password', name: 'Password', component: () => import('../views/student/PasswordView.vue'), meta: { auth: true } },
-      { path: 'history', name: 'History', component: () => import('../views/student/HistoryView.vue') },
+      { path: 'history', name: 'History', component: () => import('../views/student/HistoryView.vue'), meta: { auth: true } },
       { path: 'favourites', name: 'Favourites', component: () => import('../views/student/Favourites.vue'), meta: { auth: true } },
-      { path: 'about', name: 'About', component: () => import('../views/student/AboutView.vue') },
-      { path: 'agreement', name: 'Agreement', component: () => import('../views/student/AgreementView.vue') },
+      { path: 'about', name: 'About', component: () => import('../views/student/AboutView.vue'), meta: { auth: true } },
+      { path: 'agreement', name: 'Agreement', component: () => import('../views/student/AgreementView.vue'), meta: { auth: true } },
     ]
   },
   {
@@ -55,7 +56,13 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const userStore = useUserStore()
-  if (to.meta.auth && !userStore.cust) {
+  const publicPages = ['Login', 'Register', 'AdminLogin', 'AiAssistant']
+  const authRequired = !publicPages.includes(to.name)
+
+  if (authRequired && !userStore.cust && !userStore.admin) {
+    if (to.path.startsWith('/admin')) {
+      return { name: 'AdminLogin' }
+    }
     return { name: 'Login' }
   }
   if (to.meta.admin && !userStore.admin) {

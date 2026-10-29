@@ -16,7 +16,20 @@
         <router-link to="/home">学生端</router-link>
         <template v-if="userStore.admin">
           <span>{{ userStore.admin.name || userStore.admin.account }}</span>
-          <button @click="handleLogout">退出</button>
+          <SpecularButton
+            size="sm"
+            :radius="10"
+            tint="#6b7280"
+            :tintOpacity="0.1"
+            textColor="#374151"
+            lineColor="#6b7280"
+            baseColor="#6b7280"
+            :intensity="0.7"
+            :idleIntensity="0.3"
+            @click="handleLogout"
+          >
+            退出
+          </SpecularButton>
         </template>
       </div>
     </header>

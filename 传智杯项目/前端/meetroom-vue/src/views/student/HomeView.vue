@@ -1,5 +1,6 @@
 <template>
-  <div>
+  <div class="home-page">
+    <div class="home-content">
     <section class="hero">
       <div>
         <span class="eyebrow">MAKE ROOM FOR FOCUS</span>
@@ -38,6 +39,7 @@
       <AppCard v-for="item in newsList" :key="item.newsId" :item="item" type="news" />
     </div>
     <div v-if="!loading && !newsList.length" class="empty">暂无公告</div>
+    </div>
   </div>
 </template>
 
@@ -58,13 +60,27 @@ async function loadData() {
   try {
     const data = await api('/home/list') || {}
     meetList.value = data.meetList || []
-    newsList.value = data.newsList || []
   } catch (e) {
     error.value = e.message
-  } finally {
-    loading.value = false
   }
+  try {
+    const newsData = await api('/news/list', { page: 1, size: 6, isTotal: false })
+    newsList.value = newsData.list || []
+  } catch {}
+  finally { loading.value = false }
 }
 
 onMounted(loadData)
 </script>
+
+<style scoped>
+.home-page {
+  position: relative;
+  min-height: 100vh;
+}
+
+.home-content {
+  position: relative;
+  z-index: 1;
+}
+</style>

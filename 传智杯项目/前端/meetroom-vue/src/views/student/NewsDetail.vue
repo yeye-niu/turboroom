@@ -55,7 +55,12 @@ const coverUrl = computed(() => {
   const raw = Array.isArray(obj.value.cover) ? obj.value.cover[0] : obj.value.cover
   return getImageUrl(raw)
 })
-const richContent = computed(() => data.value ? getRichContent(obj.value.content) : [])
+const richContent = computed(() => {
+  if (!data.value) return []
+  const content = data.value.newsContent || ''
+  if (!content) return getRichContent(obj.value.content)
+  return content.split('\n').filter(s => s.trim()).map(val => ({ type: 'text', val }))
+})
 
 async function toggleFav() {
   if (!userStore.cust) { router.push('/login'); return }

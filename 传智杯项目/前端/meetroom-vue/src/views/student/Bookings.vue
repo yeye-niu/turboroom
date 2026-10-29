@@ -6,7 +6,20 @@
 
     <form class="toolbar" @submit.prevent="handleSearch">
       <input v-model="search" aria-label="搜索关键词" placeholder="搜索名称或关键词">
-      <button class="primary" type="submit">搜索</button>
+      <SpecularButton
+        size="md"
+        :radius="10"
+        tint="#1a7a6b"
+        :tintOpacity="0.2"
+        textColor="#ffffff"
+        lineColor="#ffffff"
+        baseColor="#1a7a6b"
+        :intensity="0.9"
+        :idleIntensity="0.4"
+        type="submit"
+      >
+        搜索
+      </SpecularButton>
     </form>
 
     <section class="panel">
@@ -17,7 +30,20 @@
             <p>{{ r.meetJoinDay }} / {{ r.meetJoinTime }}</p>
             <span class="chip">{{ getStatus(r) }}</span>
           </div>
-          <router-link class="button" :to="`/booking?id=${r.meetJoinId}`">查看凭证</router-link>
+          <SpecularButton
+            size="sm"
+            :radius="10"
+            tint="#1a7a6b"
+            :tintOpacity="0.15"
+            textColor="#1a7a6b"
+            lineColor="#1a7a6b"
+            baseColor="#1a7a6b"
+            :intensity="0.8"
+            :idleIntensity="0.4"
+            @click="router.push(`/booking?id=${r.meetJoinId}`)"
+          >
+            查看凭证
+          </SpecularButton>
         </article>
       </div>
       <div v-else class="empty">暂无预约记录，先去挑选一个自习场地吧。</div>

@@ -50,6 +50,14 @@ jwt:
   workExpire: 604800
 
 
+# AI 助手配置
+ai:
+  enabled: true
+  api-key: "sk-ws-H.YHYEEME.L131.MEUCIQC6MPWjIKHCNDWfT1EgiciaCms1jm_w04JGpUYk_t0dTwIgCYs9Z3Gd5Hu6WOD47Wo-s4grejv_9jQnchZXuy1zt9g"
+  base-url: "https://maas.qianwenaiapi.com/compatible-mode/v1"
+  model: "qwen-plus"
+
+
 # 文件上传
 upload:
   path: c:\file

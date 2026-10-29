@@ -5,11 +5,37 @@
 
     <form class="toolbar" @submit.prevent="handleSearch">
       <input v-model="search" placeholder="搜索名称或关键词">
-      <button class="primary" type="submit">搜索</button>
+      <SpecularButton
+        size="md"
+        :radius="10"
+        tint="#1a7a6b"
+        :tintOpacity="0.2"
+        textColor="#ffffff"
+        lineColor="#ffffff"
+        baseColor="#1a7a6b"
+        :intensity="0.9"
+        :idleIntensity="0.4"
+        type="submit"
+      >
+        搜索
+      </SpecularButton>
     </form>
 
     <div class="actions">
-      <router-link class="button primary" to="/admin/edit?type=meet">新增场地</router-link>
+      <SpecularButton
+        size="md"
+        :radius="12"
+        tint="#1a7a6b"
+        :tintOpacity="0.2"
+        textColor="#ffffff"
+        lineColor="#ffffff"
+        baseColor="#1a7a6b"
+        :intensity="0.9"
+        :idleIntensity="0.4"
+        @click="router.push('/admin/edit?type=meet')"
+      >
+        新增场地
+      </SpecularButton>
     </div>
 
     <div class="table-wrap">
@@ -22,13 +48,104 @@
             <td>{{ Number(x.meetStatus) === 1 ? '正常' : '停用 / 下架' }}{{ Number(x.meetVouch) === 1 ? ' · 推荐' : '' }}</td>
             <td>
               <div class="actions">
-                <router-link class="button" :to="`/admin/edit?type=meet&id=${x.meetId}`">编辑</router-link>
-                <router-link class="button" :to="`/admin/days?id=${x.meetId}`">开放日期</router-link>
-                <router-link class="button" :to="`/admin/joins?id=${x.meetId}`">预约名单 / 核销</router-link>
-                <button @click="toggleStatus(x)">{{ Number(x.meetStatus) === 1 ? '停用' : '启用' }}</button>
-                <button @click="handleOrder(x)">排序</button>
-                <button @click="toggleVouch(x)">{{ Number(x.meetVouch) === 1 ? '取消推荐' : '推荐' }}</button>
-                <button class="danger" @click="handleDelete(x)">删除</button>
+                <SpecularButton
+                  size="sm"
+                  :radius="8"
+                  tint="#1a7a6b"
+                  :tintOpacity="0.15"
+                  textColor="#1a7a6b"
+                  lineColor="#1a7a6b"
+                  baseColor="#1a7a6b"
+                  :intensity="0.8"
+                  :idleIntensity="0.4"
+                  @click="router.push(`/admin/edit?type=meet&id=${x.meetId}`)"
+                >
+                  编辑
+                </SpecularButton>
+                <SpecularButton
+                  size="sm"
+                  :radius="8"
+                  tint="#6b7280"
+                  :tintOpacity="0.1"
+                  textColor="#374151"
+                  lineColor="#6b7280"
+                  baseColor="#6b7280"
+                  :intensity="0.7"
+                  :idleIntensity="0.3"
+                  @click="router.push(`/admin/days?id=${x.meetId}`)"
+                >
+                  开放日期
+                </SpecularButton>
+                <SpecularButton
+                  size="sm"
+                  :radius="8"
+                  tint="#6b7280"
+                  :tintOpacity="0.1"
+                  textColor="#374151"
+                  lineColor="#6b7280"
+                  baseColor="#6b7280"
+                  :intensity="0.7"
+                  :idleIntensity="0.3"
+                  @click="router.push(`/admin/joins?id=${x.meetId}`)"
+                >
+                  预约名单 / 核销
+                </SpecularButton>
+                <SpecularButton
+                  size="sm"
+                  :radius="8"
+                  tint="#f59e0b"
+                  :tintOpacity="0.1"
+                  textColor="#d97706"
+                  lineColor="#f59e0b"
+                  baseColor="#f59e0b"
+                  :intensity="0.7"
+                  :idleIntensity="0.3"
+                  @click="toggleStatus(x)"
+                >
+                  {{ Number(x.meetStatus) === 1 ? '停用' : '启用' }}
+                </SpecularButton>
+                <SpecularButton
+                  size="sm"
+                  :radius="8"
+                  tint="#6b7280"
+                  :tintOpacity="0.1"
+                  textColor="#374151"
+                  lineColor="#6b7280"
+                  baseColor="#6b7280"
+                  :intensity="0.7"
+                  :idleIntensity="0.3"
+                  @click="handleOrder(x)"
+                >
+                  排序
+                </SpecularButton>
+                <SpecularButton
+                  size="sm"
+                  :radius="8"
+                  tint="#8b5cf6"
+                  :tintOpacity="0.1"
+                  textColor="#7c3aed"
+                  lineColor="#8b5cf6"
+                  baseColor="#8b5cf6"
+                  :intensity="0.7"
+                  :idleIntensity="0.3"
+                  @click="toggleVouch(x)"
+                >
+                  {{ Number(x.meetVouch) === 1 ? '取消推荐' : '推荐' }}
+                </SpecularButton>
+                <SpecularButton
+                  size="sm"
+                  :radius="8"
+                  tint="#ef4444"
+                  :tintOpacity="0.1"
+                  textColor="#dc2626"
+                  lineColor="#ef4444"
+                  baseColor="#ef4444"
+                  :intensity="0.7"
+                  :idleIntensity="0.3"
+                  @click="handleDelete(x)"
+                >
+                  删除
+                </SpecularButton>
               </div>
             </td>
           </tr>

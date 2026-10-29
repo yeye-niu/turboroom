@@ -5,57 +5,125 @@
     <p class="muted">管理个人资料与学习记录。</p>
 
     <div class="actions">
-      <router-link class="button" to="/bookings">我的预约</router-link>
-      <router-link class="button" to="/favourites">我的收藏</router-link>
-      <router-link class="button" to="/history">浏览足迹</router-link>
-      <router-link class="button" to="/password">修改密码</router-link>
-    </div>
+        <SpecularButton
+          size="md"
+          :radius="12"
+          tint="#1a7a6b"
+          :tintOpacity="0.15"
+          textColor="#1a7a6b"
+          lineColor="#1a7a6b"
+          baseColor="#1a7a6b"
+          :intensity="0.8"
+          :idleIntensity="0.4"
+          @click="router.push('/bookings')"
+        >
+          我的预约
+        </SpecularButton>
+        <SpecularButton
+          size="md"
+          :radius="12"
+          tint="#1a7a6b"
+          :tintOpacity="0.15"
+          textColor="#1a7a6b"
+          lineColor="#1a7a6b"
+          baseColor="#1a7a6b"
+          :intensity="0.8"
+          :idleIntensity="0.4"
+          @click="router.push('/favourites')"
+        >
+          我的收藏
+        </SpecularButton>
+        <SpecularButton
+          size="md"
+          :radius="12"
+          tint="#1a7a6b"
+          :tintOpacity="0.15"
+          textColor="#1a7a6b"
+          lineColor="#1a7a6b"
+          baseColor="#1a7a6b"
+          :intensity="0.8"
+          :idleIntensity="0.4"
+          @click="router.push('/history')"
+        >
+          浏览足迹
+        </SpecularButton>
+        <SpecularButton
+          size="md"
+          :radius="12"
+          tint="#1a7a6b"
+          :tintOpacity="0.15"
+          textColor="#1a7a6b"
+          lineColor="#1a7a6b"
+          baseColor="#1a7a6b"
+          :intensity="0.8"
+          :idleIntensity="0.4"
+          @click="router.push('/password')"
+        >
+          修改密码
+        </SpecularButton>
+      </div>
 
-    <div class="panel form">
-      <h2>个人资料</h2>
-      <div v-if="error" class="notice error" role="alert">{{ error }}</div>
-      <form @submit.prevent="handleSave">
-        <div class="field">
-          <label for="account">用户名 *</label>
-          <input id="account" v-model="form.account" required maxlength="30">
-        </div>
-        <div class="field">
-          <label for="name">昵称 *</label>
-          <input id="name" v-model="form.name" required maxlength="30">
-        </div>
-        <div class="fields">
-          <div class="field" v-for="f in userFields" :key="f[0]">
-            <label :for="'f-' + f[0]">{{ f[1] }} *</label>
-            <select v-if="f[2] === 'select'" :id="'f-' + f[0]" v-model="form[f[0]]" required>
-              <option v-for="opt in f[3]" :key="opt" :value="opt">{{ opt }}</option>
-            </select>
-            <input
-              v-else
-              :id="'f-' + f[0]"
-              :type="f[2]"
-              v-model="form[f[0]]"
-              required
-              :min="f[2] === 'number' ? 1900 : undefined"
-              :max="f[2] === 'number' ? 2100 : undefined"
-              :minlength="['college', 'major', 'item'].includes(f[0]) ? 2 : undefined"
-              :maxlength="f[2] === 'number' ? undefined : 200"
-            >
+      <div class="panel form">
+        <h2>个人资料</h2>
+        <div v-if="error" class="notice error" role="alert">{{ error }}</div>
+        <form @submit.prevent="handleSave">
+          <div class="field">
+            <label for="account">用户名 *</label>
+            <input id="account" v-model="form.account" required maxlength="30">
           </div>
-        </div>
-        <button class="primary" type="submit" :disabled="submitting">
-          {{ submitting ? '保存中...' : '保存' }}
-        </button>
-      </form>
-    </div>
+          <div class="field">
+            <label for="name">昵称 *</label>
+            <input id="name" v-model="form.name" required maxlength="30">
+          </div>
+          <div class="fields">
+            <div class="field" v-for="f in userFields" :key="f[0]">
+              <label :for="'f-' + f[0]">{{ f[1] }} *</label>
+              <select v-if="f[2] === 'select'" :id="'f-' + f[0]" v-model="form[f[0]]" required>
+                <option v-for="opt in f[3]" :key="opt" :value="opt">{{ opt }}</option>
+              </select>
+              <input
+                v-else
+                :id="'f-' + f[0]"
+                :type="f[2]"
+                v-model="form[f[0]]"
+                required
+                :min="f[2] === 'number' ? 1900 : undefined"
+                :max="f[2] === 'number' ? 2100 : undefined"
+                :minlength="['college', 'major', 'item'].includes(f[0]) ? 2 : undefined"
+                :maxlength="f[2] === 'number' ? undefined : 200"
+              >
+            </div>
+          </div>
+          <SpecularButton
+            class="primary"
+            size="lg"
+            :radius="14"
+            tint="#1a7a6b"
+            :tintOpacity="0.2"
+            textColor="#ffffff"
+            lineColor="#ffffff"
+            baseColor="#1a7a6b"
+            :intensity="0.9"
+            :idleIntensity="0.4"
+            type="submit"
+            :disabled="submitting"
+          >
+            {{ submitting ? '保存中...' : '保存' }}
+          </SpecularButton>
+        </form>
+      </div>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { api } from '../../api/request'
 import { useUserStore } from '../../stores/user'
 import { useToast } from '../../composables/useToast'
 import { userFields, parseJson, buildPayload } from '../../composables/useHelpers'
+
+const router = useRouter()
 
 const userStore = useUserStore()
 const { toast } = useToast()

@@ -102,9 +102,22 @@
           </div>
         </template>
 
-        <button class="primary" type="submit" :disabled="submitting">
+        <SpecularButton
+          class="primary"
+          size="lg"
+          :radius="14"
+          tint="#1a7a6b"
+          :tintOpacity="0.2"
+          textColor="#ffffff"
+          lineColor="#ffffff"
+          baseColor="#1a7a6b"
+          :intensity="0.9"
+          :idleIntensity="0.4"
+          type="submit"
+          :disabled="submitting"
+        >
           {{ submitting ? '保存中...' : '保存' }}
-        </button>
+        </SpecularButton>
       </form>
     </div>
   </div>

@@ -43,9 +43,22 @@
         我已阅读并同意 <router-link to="/agreement" target="_blank">用户使用协议</router-link>
       </label>
       <br>
-      <button class="primary" type="submit" :disabled="submitting">
+      <SpecularButton
+        class="primary"
+        size="lg"
+        :radius="14"
+        tint="#1a7a6b"
+        :tintOpacity="0.2"
+        textColor="#ffffff"
+        lineColor="#ffffff"
+        baseColor="#1a7a6b"
+        :intensity="0.9"
+        :idleIntensity="0.4"
+        type="submit"
+        :disabled="submitting"
+      >
         {{ submitting ? '注册中...' : '注册并登录' }}
-      </button>
+      </SpecularButton>
     </form>
     <p><router-link to="/login">已有账户？去登录</router-link></p>
   </div>

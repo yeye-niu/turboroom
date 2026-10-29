@@ -57,4 +57,7 @@ public class NewsModel extends BaseModel {
     @TableField("NEWS_OBJ")
     private String newsObj;
 
+    @TableField("NEWS_CONTENT")
+    private String newsContent;
+
 }

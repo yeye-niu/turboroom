@@ -82,23 +82,16 @@ public class MeetService extends BaseMyCustService {
         if (NumberUtil.compare(cateId, 0) > 0)
             where.eq("MEET_CATE_ID", cateId);
 
-        // 关键字查询 - 搜索标题和详细信息
+        // 关键字查询
         String search = pageRequest.getSearch();
         if (StrUtil.isNotEmpty(search)) {
             where.and(wrapper -> {
                 wrapper.or().like("MEET_TITLE", search);
-                wrapper.or().like("MEET_OBJ", search);
             });
         }
 
-        // 教学楼筛选
         String building = pageRequest.getParamStr("building");
-        if (StrUtil.isNotEmpty(building)) {
-            where.and(wrapper -> {
-                wrapper.or().like("MEET_TITLE", building);
-                wrapper.or().like("MEET_OBJ", building);
-            });
-        }
+        if (StrUtil.isNotEmpty(building)) where.like("MEET_TITLE", building);
         String roomType = pageRequest.getParamStr("roomType");
         if (StrUtil.isNotEmpty(roomType)) where.eq("MEET_CATE_NAME", roomType);
         String day = pageRequest.getParamStr("day");
@@ -329,8 +322,25 @@ public class MeetService extends BaseMyCustService {
      * 预约
      */
     public long meetJoin(long userId, long meetId, String day, String time, String forms, String obj) {
+        checkRules(userId, meetId, day, time);
 
-        return 0;
+        MeetModel meet = meetMapper.getOne(meetId);
+
+        MeetJoinModel meetJoin = new MeetJoinModel();
+        meetJoin.setMeetJoinMeetId(meetId);
+        meetJoin.setMeetJoinUserId(userId);
+        meetJoin.setMeetJoinDay(day);
+        meetJoin.setMeetJoinTime(time);
+        meetJoin.setMeetJoinForms(forms);
+        meetJoin.setMeetJoinObj(obj);
+        meetJoin.setMeetJoinMeetTitle(meet.getMeetTitle());
+        meetJoin.setMeetJoinCode(RandomUtil.randomNumbers(10));
+        meetJoin.setMeetJoinIsCheck(0);
+        meetJoin.setMeetJoinStatus(MeetJoinModel.STATUS.NORMAL);
+
+        meetJoinMapper.insert(meetJoin);
+
+        return meetJoin.getMeetJoinId();
     }
 
     /**
@@ -422,5 +432,51 @@ public class MeetService extends BaseMyCustService {
 
 
         return arr;
+    }
+
+    /**
+     * AI 推荐：获取指定日期时段的场地可用性
+     */
+    public List<Map<String, Object>> getAvailability(String day, String time, int people, String category) {
+        Where<MeetModel> where = new Where<>();
+        where.eq("MEET_STATUS", MeetModel.STATUS.NORMAL);
+        where.ge("MEET_MAX_CNT", people);
+        where.like("MEET_DAYS", day);
+        if (StrUtil.isNotEmpty(category)) {
+            where.eq("MEET_CATE_NAME", category);
+        }
+        where.orderByAsc("MEET_ORDER");
+
+        List<Map<String, Object>> list = meetMapper.getAllListMap(where, "MEET_ID,MEET_TITLE,MEET_CATE_NAME,MEET_MAX_CNT");
+
+        // 统计每个场地在该时段已预约人数
+        Where<MeetJoinModel> joinWhere = new Where<>();
+        joinWhere.eq("MEET_JOIN_DAY", day);
+        joinWhere.eq("MEET_JOIN_TIME", time);
+        joinWhere.eq("MEET_JOIN_STATUS", MeetJoinModel.STATUS.NORMAL);
+        List<Map<String, Object>> joinStats = meetJoinMapper.selectMaps(
+            joinWhere.select("MEET_JOIN_MEET_ID, count(0) as cnt").groupBy("MEET_JOIN_MEET_ID")
+        );
+        Map<Long, Integer> bookedMap = new HashMap<>();
+        for (Map<String, Object> stat : joinStats) {
+            bookedMap.put(Convert.toLong(stat.get("meetJoinMeetId")), Convert.toInt(stat.get("cnt")));
+        }
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Map<String, Object> meet : list) {
+            long meetId = Convert.toLong(meet.get("meetId"));
+            int maxCnt = Convert.toInt(meet.get("meetMaxCnt"));
+            int booked = bookedMap.getOrDefault(meetId, 0);
+            int remaining = maxCnt - booked;
+            Map<String, Object> item = new HashMap<>();
+            item.put("meetId", meetId);
+            item.put("meetTitle", meet.get("meetTitle"));
+            item.put("meetCateName", meet.get("meetCateName"));
+            item.put("meetMaxCnt", maxCnt);
+            item.put("remaining", remaining);
+            item.put("available", remaining >= people);
+            result.add(item);
+        }
+        return result;
     }
 }

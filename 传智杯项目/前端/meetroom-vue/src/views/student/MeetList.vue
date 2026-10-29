@@ -2,6 +2,24 @@
   <div>
     <div class="eyebrow">CAMPUS STUDY / TURBOROOM</div>
     <h1>找到适合你的自习空间</h1>
+    <TextLoop
+      text="找到适合你的自习空间 ✦ TurboRoom ✦ Campus Study ✦ 自习预约 ✦ 专注空间"
+      shape="wave"
+      :speed="60"
+      direction="forward"
+      separator="✦"
+      :curviness="30"
+      :tilt="-2"
+      :fontSize="24"
+      :fontWeight="700"
+      :letterSpacing="3"
+      :uppercase="false"
+      :ribbon="true"
+      ribbonColor="#1a7a6b"
+      :ribbonWidth="42"
+      :edgeFade="0.5"
+      :pauseOnHover="true"
+    />
     <p class="muted">按教学楼、教室种类和开放日期查找场地。</p>
 
     <form class="toolbar" @submit.prevent="handleSearch">
@@ -15,8 +33,34 @@
         <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
       </select>
       <input v-model="filters.day" type="date" aria-label="开放日期">
-      <button class="primary" type="submit">查询</button>
-      <router-link class="button" to="/meets">重置</router-link>
+      <SpecularButton
+        size="md"
+        :radius="10"
+        tint="#1a7a6b"
+        :tintOpacity="0.2"
+        textColor="#ffffff"
+        lineColor="#ffffff"
+        baseColor="#1a7a6b"
+        :intensity="0.9"
+        :idleIntensity="0.4"
+        type="submit"
+      >
+        查询
+      </SpecularButton>
+      <SpecularButton
+        size="md"
+        :radius="10"
+        tint="#6b7280"
+        :tintOpacity="0.1"
+        textColor="#374151"
+        lineColor="#6b7280"
+        baseColor="#6b7280"
+        :intensity="0.7"
+        :idleIntensity="0.3"
+        @click="router.push('/meets')"
+      >
+        重置
+      </SpecularButton>
     </form>
 
     <AppSkeleton v-if="loading" />
@@ -44,6 +88,7 @@ import { categories, buildings } from '../../composables/useHelpers'
 import AppCard from '../../components/AppCard.vue'
 import AppPagination from '../../components/AppPagination.vue'
 import AppSkeleton from '../../components/AppSkeleton.vue'
+import TextLoop from '../../components/TextLoop.vue'
 
 const route = useRoute()
 const router = useRouter()

@@ -7,7 +7,20 @@
       <div v-if="list.length">
         <article v-for="item in list" :key="item.favOid" class="record">
           <a :href="getLink(item)">{{ item.favTitle }}</a>
-          <button @click="handleRemove(item.favOid)">移除收藏</button>
+          <SpecularButton
+            size="sm"
+            :radius="10"
+            tint="#ef4444"
+            :tintOpacity="0.1"
+            textColor="#dc2626"
+            lineColor="#ef4444"
+            baseColor="#ef4444"
+            :intensity="0.7"
+            :idleIntensity="0.3"
+            @click="handleRemove(item.favOid)"
+          >
+            移除收藏
+          </SpecularButton>
         </article>
       </div>
       <div v-else class="empty">暂无收藏</div>

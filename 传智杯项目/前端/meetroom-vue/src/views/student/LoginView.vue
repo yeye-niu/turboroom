@@ -41,9 +41,22 @@
             @change="onPasswordChange"
           />
         </div>
-        <button class="primary" type="submit" :disabled="submitting || form.password.length < 6">
+        <SpecularButton
+          class="primary"
+          size="lg"
+          :radius="14"
+          tint="#1a7a6b"
+          :tintOpacity="0.2"
+          textColor="#ffffff"
+          lineColor="#ffffff"
+          baseColor="#1a7a6b"
+          :intensity="0.9"
+          :idleIntensity="0.4"
+          type="submit"
+          :disabled="submitting || form.password.length < 6"
+        >
           {{ submitting ? '登录中...' : '登录' }}
-        </button>
+        </SpecularButton>
       </form>
       <p><router-link to="/register">没有账户？注册</router-link></p>
     </div>
@@ -85,7 +98,7 @@ async function handleLogin() {
     const result = await api('/passport/login', { account: form.account, password: form.password })
     userStore.login('cust', result.token)
     loginStatus.value = 'success'
-    setTimeout(() => router.push('/profile'), 600)
+    setTimeout(() => router.push('/home'), 600)
   } catch (e) {
     error.value = e.message
     loginStatus.value = 'error'

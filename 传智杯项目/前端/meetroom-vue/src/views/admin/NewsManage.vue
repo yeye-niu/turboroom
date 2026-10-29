@@ -5,7 +5,20 @@
 
     <form class="toolbar" @submit.prevent="handleSearch">
       <input v-model="search" placeholder="搜索名称或关键词">
-      <button class="primary" type="submit">搜索</button>
+      <SpecularButton
+        size="md"
+        :radius="10"
+        tint="#1a7a6b"
+        :tintOpacity="0.2"
+        textColor="#ffffff"
+        lineColor="#ffffff"
+        baseColor="#1a7a6b"
+        :intensity="0.9"
+        :idleIntensity="0.4"
+        type="submit"
+      >
+        搜索
+      </SpecularButton>
     </form>
 
     <div class="actions">
